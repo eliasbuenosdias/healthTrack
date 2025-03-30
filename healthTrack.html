@@ -8,521 +8,378 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fa;
-            color: #333;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .sidebar {
-            width: 250px;
-            background-color: #2c3e50;
-            color: white;
-            padding: 20px;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .sidebar-collapsed {
-            transform: translateX(-250px);
-        }
-        
-        .toggle-sidebar {
-            position: fixed;
-            left: 250px;
-            top: 20px;
-            background-color: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 0 5px 5px 0;
-            padding: 10px;
-            cursor: pointer;
-            z-index: 1001;
-            transition: all 0.3s ease;
-        }
-        
-        .toggle-sidebar.collapsed {
-            left: 0;
-        }
-        
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3498db;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo i {
-            margin-right: 10px;
-        }
-        
-        .filter-section {
-            margin-bottom: 30px;
-        }
-        
-        .filter-section h3 {
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #ecf0f1;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 8px;
-        }
-        
-        .filter-group {
-            margin-bottom: 15px;
-        }
-        
-        .filter-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #bdc3c7;
-        }
-        
-        .filter-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: none;
-            border-radius: 4px;
-            background-color: #34495e;
-            color: white;
-            margin-bottom: 10px;
-        }
-        
-        .filter-input:focus {
-            outline: none;
-            background-color: #3d566e;
-        }
-        
-        .filter-btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            margin-top: 15px;
-        }
-        
-        .filter-btn:hover {
-            background-color: #2980b9;
-        }
-        
-        .preset-filter {
-            display: block;
-            padding: 8px 10px;
-            margin-bottom: 8px;
-            background-color: #34495e;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            text-align: left;
-            cursor: pointer;
-            width: 100%;
-            transition: background-color 0.3s;
-        }
-        
-        .preset-filter:hover {
-            background-color: #3498db;
-        }
-        
-        .preset-filter.active {
-            background-color: #3498db;
-        }
-        
-        .main-content {
-            flex: 1;
-            margin-left: 250px;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-        
-        .main-content.expanded {
-            margin-left: 0;
-        }
-        
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #e0e6ed;
-            margin-bottom: 30px;
-        }
-        
-        .header-title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #3498db;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .file-input-section {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .file-input-label {
-            font-size: 16px;
-            font-weight: bold;
-        }
-        
-        .file-input-container {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .csv-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        .load-btn {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        
-        .load-btn:hover {
-            background-color: #2980b9;
-        }
-        
-        .dashboard-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .date-range-display {
-            font-size: 16px;
-            font-weight: normal;
-            color: #7f8c8d;
-        }
-        
-        .metric-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .metric-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .metric-card h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #555;
-            display: flex;
-            align-items: center;
-        }
-        
-        .metric-icon {
-            margin-right: 8px;
-            color: #3498db;
-        }
-        
-        .metric-value {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #3498db;
-        }
-        
-        .metric-trend {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            color: #27ae60;
-            margin-bottom: 5px;
-        }
-        
-        .trend-down {
-            color: #e74c3c;
-        }
-        
-        .trend-stable {
-            color: #f39c12;
-        }
-        
-        .trend-icon {
-            margin-right: 5px;
-            font-size: 16px;
-        }
-        
-        .metric-change-rate {
-            font-size: 12px;
-            color: #7f8c8d;
-        }
-        
-        .metric-status-indicator {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-        }
-        
-        .status-good {
-            background-color: #27ae60;
-        }
-        
-        .status-warning {
-            background-color: #f39c12;
-        }
-        
-        .status-alert {
-            background-color: #e74c3c;
-        }
-        
-        .charts-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .chart-card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-        
-        .chart-card h3 {
-            font-size: 18px;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .chart-icon {
-            color: #3498db;
-            margin-right: 8px;
-        }
-        
-        .chart-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .chart-btn {
-            background: none;
-            border: none;
-            color: #7f8c8d;
-            cursor: pointer;
-            font-size: 14px;
-            transition: color 0.3s;
-        }
-        
-        .chart-btn:hover {
-            color: #3498db;
-        }
-        
-        .chart-container {
-            height: 300px;
-            position: relative;
-        }
-        
-        .no-data-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: #7f8c8d;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 20px 0;
-            color: #7f8c8d;
-            font-size: 14px;
-            border-top: 1px solid #e0e6ed;
-            margin-top: 30px;
-        }
-        
-        #data-section {
-            display: none;
-        }
-        
-        .data-info {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-        
-        .data-info-title {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-        }
-        
-        .data-info-icon {
-            margin-right: 8px;
-            color: #3498db;
-        }
-        
-        .data-info-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        
-        .data-info-item {
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .data-info-label {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 5px;
-        }
-        
-        .data-info-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        .health-goal {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-right: 5px;
-            color: white;
-            display: inline-block;
-        }
-        
-        .goal-achieved {
-            background-color: #27ae60;
-        }
-        
-        .goal-in-progress {
-            background-color: #f39c12;
-        }
-        
-        .goal-needs-attention {
-            background-color: #e74c3c;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-250px);
-            }
-            
-            .toggle-sidebar {
-                left: 0;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .charts-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .metric-overview {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
-            
-            .file-input-container {
-                flex-direction: column;
-            }
-            
-            .header-title {
-                font-size: 20px;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .metric-overview {
-                grid-template-columns: 1fr;
-            }
-            
-            .user-info {
-                display: none;
-            }
-        }
+        /* Estilos omitidos por brevedad */
     </style>
     <!-- Línea para cargar el archivo JavaScript externo -->
-    <script src="healthtrack.js"></script>
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let weightChart, bmiChart, fatRateChart, muscleRateChart, waterRateChart, metabolismChart, visceralFatChart, boneMassChart;
+        let currentFilterType = 'all';
+        let customStartDate = null;
+        let customEndDate = null;
+
+        const healthRanges = {
+            bmi: { min: 18.5, max: 24.9 },
+            fatRate: { min: 10, max: 20 },
+            muscleRate: { min: 40, max: 60 },
+            bodyWaterRate: { min: 50, max: 65 },
+            visceralFat: { min: 1, max: 9 }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleSidebarBtn = document.getElementById('toggleSidebar');
+            const mainContent = document.getElementById('mainContent');
+            const presetFilters = document.querySelectorAll('.preset-filter');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const applyCustomFilterBtn = document.getElementById('applyCustomFilter');
+            const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+            const csvFileInput = document.getElementById('csvFileInput');
+            const loadDataBtn = document.getElementById('loadDataBtn');
+            const dataSection = document.getElementById('data-section');
+
+            toggleSidebarBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            });
+
+            presetFilters.forEach(filter => {
+                filter.addEventListener('click', function() {
+                    const filterType = this.getAttribute('data-filter');
+                    applyFilter(filterType);
+                    presetFilters.forEach(f => f.classList.remove('active'));
+                    this.classList.add('active');
+                    updateDateRangeDisplay(filterType);
+                });
+            });
+
+            applyCustomFilterBtn.addEventListener('click', () => {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                if (startDate && endDate) {
+                    customStartDate = startDate;
+                    customEndDate = endDate;
+                    applyFilter('custom');
+                    presetFilters.forEach(f => f.classList.remove('active'));
+                    document.querySelector('[data-filter="custom"]').classList.add('active');
+                    updateDateRangeDisplay('custom');
+                }
+            });
+
+            loadDataBtn.addEventListener('click', () => {
+                const file = csvFileInput.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const content = e.target.result;
+                        parseVerticalCSV(content);
+                        if (allData.length > 0) {
+                            initializeCharts();
+                            applyFilter('all');
+                            document.querySelector('[data-filter="all"]').classList.add('active');
+                            updateDateRangeDisplay('all');
+                            dataSection.style.display = 'block';
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+        });
+
+        function parseVerticalCSV(content) {
+            const lines = content.trim().split('\n');
+            const headers = [];
+            const values = [];
+
+            let headerSection = true;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                if (line.match(/^\*?\*?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\+\d{4}\*?\*?$/)) {
+                    headerSection = false;
+                }
+
+                if (headerSection) {
+                    if (line && !line.match(/^\*\*\s*\*\*$/)) {
+                        headers.push(line.replace(/\*\*/g, '').trim());
+                    }
+                } else {
+                    values.push(line.replace(/\*\*/g, '').trim());
+                }
+            }
+
+            if (headers.length > 0 && values.length > 0) {
+                const dataPoint = {};
+
+                for (let i = 0; i < Math.min(headers.length, values.length); i++) {
+                    const header = headers[i].replace(/\*\*/g, '').trim();
+                    const value = values[i].replace(/\*\*/g, '').trim();
+
+                    if (header === 'time') {
+                        try {
+                            dataPoint[header] = new Date(value);
+                            if (isNaN(dataPoint[header].getTime())) {
+                                console.error("Error en formato de fecha:", value);
+                                dataPoint[header] = value;
+                            }
+                        } catch (e) {
+                            console.error("Error al parsear fecha:", e);
+                            dataPoint[header] = value;
+                        }
+                    } else {
+                        const numValue = parseFloat(value);
+                        dataPoint[header] = !isNaN(numValue) ? numValue : value;
+                    }
+                }
+
+                if (dataPoint.time && dataPoint.weight) {
+                    allData.push(dataPoint);
+                    console.log("Datos cargados:", allData);
+                } else {
+                    console.error("Datos incompletos o inválidos:", dataPoint);
+                }
+            }
+        }
+
+        function applyFilter(filterType) {
+            currentFilterType = filterType;
+            const now = new Date();
+
+            switch(filterType) {
+                case 'week':
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(now.getDate() - 7);
+                    filteredData = allData.filter(item => {
+                        const itemDate = item.time instanceof Date ? item.time : new Date(item.time);
+                        return itemDate >= oneWeekAgo;
+                    });
+                    break;
+                case 'month':
+                    const oneMonthAgo = new Date();
+                    oneMonthAgo.setMonth(now.getMonth() - 1);
+                    filteredData = allData.filter(item => {
+                        const itemDate = item.time instanceof Date ? item.time : new Date(item.time);
+                        return itemDate >= oneMonthAgo;
+                    });
+                    break;
+                case 'year':
+                    const oneYearAgo = new Date();
+                    oneYearAgo.setFullYear(now.getFullYear() - 1);
+                    filteredData = allData.filter(item => {
+                        const itemDate = item.time instanceof Date ? item.time : new Date(item.time);
+                        return itemDate >= oneYearAgo;
+                    });
+                    break;
+                case 'custom':
+                    if (customStartDate && customEndDate) {
+                        filteredData = allData.filter(item => {
+                            const itemDate = item.time instanceof Date ? item.time : new Date(item.time);
+                            return itemDate >= customStartDate && itemDate <= customEndDate;
+                        });
+                    }
+                    break;
+                case 'all':
+                default:
+                    filteredData = [...allData];
+                    break;
+            }
+
+            updateCharts();
+        }
+
+        function updateDateRangeDisplay(filterType) {
+            const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+            const now = new Date();
+            let text = '';
+
+            switch(filterType) {
+                case 'week':
+                    const oneWeekAgo = new Date();
+                    oneWeekAgo.setDate(now.getDate() - 7);
+                    text = `Datos de la última semana (${formatDate(oneWeekAgo)} - ${formatDate(now)})`;
+                    break;
+                case 'month':
+                    const oneMonthAgo = new Date();
+                    oneMonthAgo.setMonth(now.getMonth() - 1);
+                    text = `Datos del último mes (${formatDate(oneMonthAgo)} - ${formatDate(now)})`;
+                    break;
+                case 'year':
+                    const oneYearAgo = new Date();
+                    oneYearAgo.setFullYear(now.getFullYear() - 1);
+                    text = `Datos del último año (${formatDate(oneYearAgo)} - ${formatDate(now)})`;
+                    break;
+                case 'custom':
+                    if (customStartDate && customEndDate) {
+                        text = `Rango personalizado (${formatDate(customStartDate)} - ${formatDate(customEndDate)})`;
+                    } else {
+                        text = 'Rango personalizado (seleccione fechas)';
+                    }
+                    break;
+                case 'all':
+                default:
+                    if (allData.length > 0) {
+                        const dates = allData.map(item => {
+                            return item.time instanceof Date ? item.time : new Date(item.time);
+                        });
+                        const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+                        const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+                        text = `Todos los datos (${formatDate(minDate)} - ${formatDate(maxDate)})`;
+                    } else {
+                        text = 'Todos los datos';
+                    }
+                    break;
+            }
+
+            dateRangeDisplay.textContent = text;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString();
+        }
+
+        function initializeCharts() {
+            const ctx = {
+                weight: document.getElementById('weightChart').getContext('2d'),
+                bmi: document.getElementById('bmiChart').getContext('2d'),
+                fatRate: document.getElementById('fatRateChart').getContext('2d'),
+                muscleRate: document.getElementById('muscleRateChart').getContext('2d'),
+                waterRate: document.getElementById('waterRateChart').getContext('2d'),
+                metabolism: document.getElementById('metabolismChart').getContext('2d'),
+                visceralFat: document.getElementById('visceralFatChart').getContext('2d'),
+                boneMass: document.getElementById('boneMassChart').getContext('2d')
+            };
+
+            const commonConfig = {
+                type: 'line',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            }
+                        }
+                    }
+                }
+            };
+
+            weightChart = createChart(ctx.weight, 'Peso (kg)', 'weight', commonConfig, null);
+            bmiChart = createChart(ctx.bmi, 'IMC', 'bmi', commonConfig, healthRanges.bmi);
+            fatRateChart = createChart(ctx.fatRate, 'Grasa Corporal (%)', 'fatRate', commonConfig, healthRanges.fatRate);
+            muscleRateChart = createChart(ctx.muscleRate, 'Masa Muscular (%)', 'muscleRate', commonConfig, healthRanges.muscleRate);
+            waterRateChart = createChart(ctx.waterRate, 'Agua Corporal (%)', 'bodyWaterRate', commonConfig, healthRanges.bodyWaterRate);
+            metabolismChart = createChart(ctx.metabolism, 'Metabolismo (kcal)', 'metabolism', commonConfig, null);
+            visceralFatChart = createChart(ctx.visceralFat, 'Grasa Visceral', 'visceralFat', commonConfig, healthRanges.visceralFat);
+            boneMassChart = createChart(ctx.boneMass, 'Masa Ósea (kg)', 'boneMass', commonConfig, null);
+        }
+
+        function createChart(ctx, label, dataKey, commonConfig, healthRange) {
+            const config = JSON.parse(JSON.stringify(commonConfig));
+
+            config.data = {
+                labels: filteredData.map(item => item.time),
+                datasets: [{
+                    label: label,
+                    data: filteredData.map(item => ({ x: item.time, y: item[dataKey] })),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            };
+
+            if (healthRange) {
+                config.data.datasets.push({
+                    label: 'Mínimo saludable',
+                    data: filteredData.map(item => ({ x: item.time, y: healthRange.min })),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                });
+
+                config.data.datasets.push({
+                    label: 'Máximo saludable',
+                    data: filteredData.map(item => ({ x: item.time, y: healthRange.max })),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                });
+            }
+
+            return new Chart(ctx, config);
+        }
+
+        function updateCharts() {
+            const charts = [
+                { chart: weightChart, key: 'weight' },
+                { chart: bmiChart, key: 'bmi' },
+                { chart: fatRateChart, key: 'fatRate' },
+                { chart: muscleRateChart, key: 'muscleRate' },
+                { chart: waterRateChart, key: 'bodyWaterRate' },
+                { chart: metabolismChart, key: 'metabolism' },
+                { chart: visceralFatChart, key: 'visceralFat' },
+                { chart: boneMassChart, key: 'boneMass' }
+            ];
+
+            charts.forEach(item => {
+                if (item.chart) {
+                    item.chart.data.labels = filteredData.map(d => d.time);
+                    item.chart.data.datasets[0].data = filteredData.map(d => ({ x: d.time, y: d[item.key] }));
+
+                    if (item.chart.data.datasets.length > 1) {
+                        item.chart.data.datasets[1].data = filteredData.map(d => ({ x: d.time, y: item.chart.data.datasets[1].data[0].y }));
+                        item.chart.data.datasets[2].data = filteredData.map(d => ({ x: d.time, y: item.chart.data.datasets[2].data[0].y }));
+                    }
+
+                    item.chart.update();
+                }
+            });
+
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            if (filteredData.length === 0) return;
+
+            const stats = {
+                weight: calculateStats(filteredData.map(item => item.weight)),
+                bmi: calculateStats(filteredData.map(item => item.bmi)),
+                fatRate: calculateStats(filteredData.map(item => item.fatRate)),
+                muscleRate: calculateStats(filteredData.map(item => item.muscleRate)),
+                bodyWaterRate: calculateStats(filteredData.map(item => item.bodyWaterRate)),
+                metabolism: calculateStats(filteredData.map(item => item.metabolism)),
+                visceralFat: calculateStats(filteredData.map(item => item.visceralFat)),
+                boneMass: calculateStats(filteredData.map(item => item.boneMass))
+            };
+
+            for (const [key, value] of Object.entries(stats)) {
+                const avgElement = document.getElementById(`${key}Avg`);
+                const minElement = document.getElementById(`${key}Min`);
+                const maxElement = document.getElementById(`${key}Max`);
+
+                if (avgElement) avgElement.textContent = value.avg.toFixed(1);
+                if (minElement) minElement.textContent = value.min.toFixed(1);
+                if (maxElement) maxElement.textContent = value.max.toFixed(1);
+            }
+        }
+
+        function calculateStats(data) {
+            const avg = data.reduce((sum, val) => sum + val, 0) / data.length;
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+
+            return { avg, min, max };
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -589,245 +446,4 @@
                     <button id="loadDataBtn" class="load-btn">
                         <i class="fas fa-upload"></i> Cargar Datos
                     </button>
-                </div>
-                <div id="csv-format-info">
-                    <p>Formato esperado: time, weight, height, bmi, fatRate, bodyWaterRate, boneMass, metabolism, muscleRate, visceralFat</p>
-                </div>
-            </div>
-            
-            <div id="data-section">
-                <div class="dashboard-title">
-                    Tu Resumen de Salud
-                    <span class="date-range-display" id="dateRangeDisplay">Mostrando todos los datos</span>
-                </div>
-                
-                <div class="data-info">
-                    <div class="data-info-title">
-                        <i class="fas fa-info-circle data-info-icon"></i> Información General
-                    </div>
-                    <div class="data-info-content">
-                        <div class="data-info-item">
-                            <div class="data-info-label">Registros Totales</div>
-                            <div class="data-info-value" id="totalRecords">-</div>
-                        </div>
-                        <div class="data-info-item">
-                            <div class="data-info-label">Primer Registro</div>
-                            <div class="data-info-value" id="firstRecord">-</div>
-                        </div>
-                        <div class="data-info-item">
-                            <div class="data-info-label">Último Registro</div>
-                            <div class="data-info-value" id="lastRecord">-</div>
-                        </div>
-                        <div class="data-info-item">
-                            <div class="data-info-label">Estado de Metas</div>
-                            <div class="data-info-value" id="goalsStatus">
-                                <span class="health-goal goal-in-progress">En progreso</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="metric-overview">
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="weight-status"></div>
-                        <h3><i class="fas fa-weight metric-icon"></i> Peso</h3>
-                        <div id="weight-value" class="metric-value">-</div>
-                        <div id="weight-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="weight-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="bmi-status"></div>
-                        <h3><i class="fas fa-calculator metric-icon"></i> IMC</h3>
-                        <div id="bmi-value" class="metric-value">-</div>
-                        <div id="bmi-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="bmi-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="fat-status"></div>
-                        <h3><i class="fas fa-percentage metric-icon"></i> Grasa Corporal</h3>
-                        <div id="fat-value" class="metric-value">-</div>
-                        <div id="fat-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="fat-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="muscle-status"></div>
-                        <h3><i class="fas fa-dumbbell metric-icon"></i> Masa Muscular</h3>
-                        <div id="muscle-value" class="metric-value">-</div>
-                        <div id="muscle-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="muscle-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="water-status"></div>
-                        <h3><i class="fas fa-tint metric-icon"></i> Agua Corporal</h3>
-                        <div id="water-value" class="metric-value">-</div>
-                        <div id="water-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="water-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="bone-status"></div>
-                        <h3><i class="fas fa-bone metric-icon"></i> Masa Ósea</h3>
-                        <div id="bone-value" class="metric-value">-</div>
-                        <div id="bone-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="bone-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="visceral-status"></div>
-                        <h3><i class="fas fa-exclamation-circle metric-icon"></i> Grasa Visceral</h3>
-                        <div id="visceral-value" class="metric-value">-</div>
-                        <div id="visceral-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="visceral-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                    
-                    <div class="metric-card">
-                        <div class="metric-status-indicator" id="metabolism-status"></div>
-                        <h3><i class="fas fa-fire metric-icon"></i> Metabolismo Basal</h3>
-                        <div id="metabolism-value" class="metric-value">-</div>
-                        <div id="metabolism-trend" class="metric-trend">
-                            <i class="fas fa-arrow-down trend-icon"></i> -
-                        </div>
-                        <div id="metabolism-change" class="metric-change-rate">Cambio vs. promedio: -</div>
-                    </div>
-                </div>
-                
-                <div class="charts-container">
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-weight chart-icon"></i> Evolución del Peso</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="weightFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="weightChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-calculator chart-icon"></i> Evolución del IMC</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="bmiFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="bmiChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-percentage chart-icon"></i> Grasa Corporal</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="fatRateFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="fatRateChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-dumbbell chart-icon"></i> Masa Muscular</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="muscleRateFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="muscleRateChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-tint chart-icon"></i> Agua Corporal</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="waterRateFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="waterRateChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-fire chart-icon"></i> Metabolismo Basal</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="metabolismFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="metabolismChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-exclamation-circle chart-icon"></i> Grasa Visceral</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="visceralFatFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="visceralFatChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <h3>
-                            <span><i class="fas fa-bone chart-icon"></i> Masa Ósea</span>
-                            <div class="chart-actions">
-                                <button class="chart-btn" id="boneMassFullScreen">
-                                    <i class="fas fa-expand"></i>
-                                </button>
-                            </div>
-                        </h3>
-                        <div class="chart-container">
-                            <canvas id="boneMassChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <footer>
-                © 2025 HealthTrack. Todos los derechos reservados.
-            </footer>
-        </div>
-    </div>
-</body>
-</html>
+                </div
