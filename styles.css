@@ -1,0 +1,353 @@
+:root {
+    --primary-color: #4a6fa5;
+    --secondary-color: #166088;
+    --accent-color: #4cb5f5;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: auto;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f4f8;
+    color: var(--dark-color);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.page-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+    border-bottom: 4px solid var(--accent-color);
+    box-shadow: var(--box-shadow);
+}
+
+.header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.main-content {
+    flex-grow: 1;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 25px;
+    margin: 20px 0;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.file-input-container {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    cursor: pointer;
+    width: 100%;
+    max-width: 250px;
+}
+
+.file-input-label {
+    display: block;
+    padding: 12px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.file-input-label:hover {
+    background-color: var(--secondary-color);
+}
+
+.file-input-container input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+select, input[type="date"], button {
+    padding: 12px 20px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+    background-color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+select {
+    cursor: pointer;
+    min-width: 150px;
+}
+
+select:focus, input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(76, 181, 245, 0.2);
+}
+
+button {
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 120px;
+}
+
+button:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.metrics-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 20px 0;
+    justify-content: center;
+}
+
+.metrics-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.metrics-group {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 15px;
+    width: 100%;
+    max-width: 250px;
+}
+
+.metrics-group-title {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.metric-checkbox {
+    display: flex;
+    align-items: center;
+    background-color: #f1f3f5;
+    padding: 8px 15px;
+    border-radius: 50px;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+}
+
+.metric-checkbox:hover {
+    background-color: #e9ecef;
+}
+
+.metric-checkbox input {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.metric-checkbox label {
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.charts-container {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: visible; /* Permite que el contenido crezca para el scroll general */
+}
+
+.chart-wrapper {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    height: 300px; /* Establece una altura fija para cada gráfico */
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.chart-title {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.footer {
+    text-align: center;
+    padding: 15px 0;
+    background-color: var(--light-color);
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.date-range-info {
+    background-color: var(--light-color);
+    padding: 8px 15px;
+    border-radius: var(--border-radius);
+    text-align: center;
+    margin: 10px 0;
+    font-weight: 500;
+    color: var(--secondary-color);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+    .chart-wrapper {
+        min-height: 300px; /* Adjust height for medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-wrapper {
+        min-height: 250px; /* Further adjust height for smaller screens */
+    }
+
+    .chart-controls button,
+    .chart-controls select {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .charts-container {
+        padding: 0 5px; /* Adjust padding for smaller screens */
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-wrapper {
+        min-height: 200px; /* Adjust height for extra small screens */
+    }
+
+    .chart-controls button,
+    .chart-controls select {
+        padding: 6px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Styles for the global chart type select */
+#globalChartType {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: inherit;
+    min-width: 150px; /* Adjust as needed */
+}
+
+/* Styles for latest data display */
+.latest-data-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+.latest-data-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: var(--border-radius);
+    padding: 15px;
+    text-align: center;
+    min-width: 150px;
+}
+.latest-data-item h4 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+.latest-data-item p {
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+.progress-chart-wrapper {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 20px;
+    height: 300px; /* Establece una altura fija para el gráfico de progreso */
+    margin-bottom: 20px;
+    position: relative;
+}
+.progress-chart-title {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}

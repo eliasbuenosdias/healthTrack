@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas de la Báscula</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .latest-data-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .latest-data-item {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .latest-data-item h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        .latest-data-item p {
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+        .progress-chart-wrapper {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            min-height: 200px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .progress-chart-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Estadísticas de la Báscula mi scale 2</h1>
+            <p>Visualiza y analiza tus datos de composición corporal</p>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="container">
+            <div class="card">
+                <div class="controls">
+                    <div class="file-input-container">
+                        <label class="file-input-label">Cargar archivo CSV</label>
+                        <input type="file" id="fileInput" accept=".csv">
+                    </div>
+                    <select id="filter">
+                        <option value="all">Todos los datos</option>
+                        <option value="weekly">Última semana</option>
+                        <option value="monthly">Último mes</option>
+                        <option value="yearly" selected>Último año</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                    <input type="date" id="startDate">
+                    <input type="date" id="endDate">
+                    <button id="updateButton">Actualizar</button>
+                </div>
+                <div class="metrics-groups">
+                    <div class="metrics-group">
+                        <div class="metrics-group-title">Composición Principal</div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="weight" value="weight" checked>
+                            <label for="weight">Peso (kg)</label>
+                        </div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="bmi" value="bmi" checked>
+                            <label for="bmi">IMC</label>
+                        </div>
+                    </div>
+                    <div class="metrics-group">
+                        <div class="metrics-group-title">Grasa y Músculo</div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="fatRate" value="fatRate" checked>
+                            <label for="fatRate">Grasa (%)</label>
+                        </div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="muscleRate" value="muscleRate" checked>
+                            <label for="muscleRate">Músculo (%)</label>
+                        </div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="visceralFat" value="visceralFat" checked>
+                            <label for="visceralFat">Grasa Visceral</label>
+                        </div>
+                    </div>
+                    <div class="metrics-group">
+                        <div class="metrics-group-title">Otros Indicadores</div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="bodyWaterRate" value="bodyWaterRate" checked>
+                            <label for="bodyWaterRate">Agua (%)</label>
+                        </div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="boneMass" value="boneMass" checked>
+                            <label for="boneMass">Masa Ósea (kg)</label>
+                        </div>
+                        <div class="metric-checkbox">
+                            <input type="checkbox" id="metabolism" value="metabolism" checked>
+                            <label for="metabolism">Metabolismo (kcal)</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="latestDataContainer" class="latest-data-container">
+                    </div>
+                <div id="dateRangeInfo" class="date-range-info">
+                    No hay datos cargados
+                </div>
+            </div>
+            <div id="chartsContainer" class="charts-container">
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="container">
+            <p>© 2025 eliasbuenosdias | Visualiza tus datos corporales de forma sencilla</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
