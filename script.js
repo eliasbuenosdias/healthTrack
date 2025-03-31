@@ -11,8 +11,17 @@ const chartColors = {
     success: { color: '#28a745' }, // Añade un color para éxito
     danger: { color: '#dc3545' }      // Añade un color para peligro
 };
-// Metric titles and units for better readability (can be empty now)
-const metricInfo = {};
+// Metric titles and units for better readability
+const metricInfo = {
+    weight: { title: 'Peso Corporal', unit: 'kg', order: 1 },
+    bmi: { title: 'Índice de Masa Corporal', unit: '', order: 2 },
+    fatRate: { title: 'Porcentaje de Grasa Corporal', unit: '%', order: 3 },
+    muscleRate: { title: 'Porcentaje de Músculo', unit: '%', order: 4 },
+    visceralFat: { title: 'Grasa Visceral', unit: '', order: 5 },
+    bodyWaterRate: { title: 'Porcentaje de Agua Corporal', unit: '%', order: 6 },
+    boneMass: { title: 'Masa Ósea', unit: 'kg', order: 7 },
+    metabolism: { title: 'Metabolismo Basal', unit: 'kcal', order: 8 }
+};
 
 let rawData = [];
 let latestDateInData;
@@ -28,6 +37,9 @@ const updateButton = document.getElementById('updateButton');
 const chartsContainer = document.getElementById('chartsContainer');
 const dateRangeInfo = document.getElementById('dateRangeInfo');
 const latestDataContainer = document.getElementById('latestDataContainer');
+
+// Ordered list of metrics to display in the "Último Dato Insertado" section
+const orderedMetrics = ['weight', 'bmi', 'fatRate', 'boneMass', 'metabolism', 'muscleRate', 'visceralFat', 'bodyWaterRate'];
 
 // Event Listeners
 fileInput.addEventListener('change', handleFileUpload);
@@ -259,23 +271,24 @@ function updateCharts(header) {
         .map(cb => cb.value);
 
     chartsContainer.innerHTML = '';
-    latestDataContainer.innerHTML = '';
+    latestDataContainer.innerHTML = '<h4>Último Dato Insertado</h4>';
 
-    // Display the absolute latest measurement from the raw data
+    // Display the absolute latest measurement from the raw data in the specified order
     if (rawData.length > 0) {
         const absoluteLatestDataPoint = rawData.reduce((latest, current) => {
             return current.time > latest.time ? current : latest;
         });
-        latestDataContainer.innerHTML = '<h4>Último Dato Insertado</h4>';
-        header.forEach(columnName => {
-            if (columnName.toLowerCase() !== 'time') {
-                const value = absoluteLatestDataPoint[columnName];
-                const unit = metricInfo[columnName.toLowerCase()]?.unit || '';
+
+        orderedMetrics.forEach(metricName => {
+            if (absoluteLatestDataPoint.hasOwnProperty(metricName)) {
+                const value = absoluteLatestDataPoint[metricName];
+                const unit = metricInfo[metricName.toLowerCase()]?.unit || '';
+                const title = metricInfo[metricName.toLowerCase()]?.title || metricName;
                 const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
                 if (formattedValue !== undefined && formattedValue !== null) {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'latest-data-item';
-                    itemDiv.innerHTML = `<p><strong>${columnName}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
+                    itemDiv.innerHTML = `<p><strong>${title}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
                     latestDataContainer.appendChild(itemDiv);
                 }
             }
