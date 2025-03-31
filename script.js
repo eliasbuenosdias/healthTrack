@@ -126,7 +126,24 @@ function filterData() {
 
         case 'monthly':
             const monthAgo = new Date();
-            monthAgo.setMonth(now.getMonth() - 1);
+            const currentMonth = now.getMonth();
+            monthAgo.setMonth(currentMonth - 1);
+
+            // Handle cases where subtracting a month goes to the previous year
+            if (monthAgo.getMonth() > currentMonth && currentMonth !== 0) {
+                monthAgo.setFullYear(now.getFullYear() - 1);
+            } else if (currentMonth === 0 && monthAgo.getMonth() === 11) {
+                monthAgo.setFullYear(now.getFullYear() - 1);
+            }
+
+            // Ensure the day of the month is valid for the previous month
+            const daysInPreviousMonth = new Date(monthAgo.getFullYear(), monthAgo.getMonth() + 1, 0).getDate();
+            if (now.getDate() > daysInPreviousMonth) {
+                monthAgo.setDate(daysInPreviousMonth);
+            } else {
+                monthAgo.setDate(now.getDate());
+            }
+
             filteredData = rawData.filter(d => d.time >= monthAgo);
             break;
 
