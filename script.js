@@ -24,6 +24,7 @@ const metricInfo = {
 };
 
 let rawData = [];
+let latestDateInData;
 let charts = {};
 
 // DOM Elements
@@ -62,15 +63,22 @@ function handleFileUpload(event) {
         try {
             rawData = parseCSV(e.target.result);
             if (rawData.length > 0) {
+                // Determine the latest date in the data
+                latestDateInData = rawData.reduce((maxDate, current) => {
+                    return current.time > maxDate ? current.time : maxDate;
+                }, new Date(0)); // Initialize with a very early date
+
                 updateCharts();
             } else {
                 alert("No se pudieron procesar datos válidos del archivo CSV.");
                 dateRangeInfo.textContent = "No hay datos válidos en el archivo";
+                latestDateInData = null;
             }
         } catch (error) {
             console.error("Error processing CSV:", error);
             alert("Error al procesar el archivo CSV: " + error.message);
             dateRangeInfo.textContent = "Error al procesar el archivo";
+            latestDateInData = null;
         }
     };
     reader.readAsText(file);
@@ -80,16 +88,15 @@ function handleFileUpload(event) {
 function parseCSV(csv) {
     const lines = csv.split('\n');
 
-    // Skip empty lines and remove header row check
     return lines.filter(line => line.trim() !== '')
         .map(line => {
             const values = line.split(',').map(v => v.trim());
-            if (values.length < 10) return null; // Skip incomplete lines
+            if (values.length < 10) return null;
 
             const [time, weight, height, bmi, fatRate, bodyWaterRate, boneMass, metabolism, muscleRate, visceralFat] = values;
 
             const parsedTime = new Date(time);
-            if (isNaN(parsedTime)) return null; // Skip lines with invalid date
+            if (isNaN(parsedTime)) return null;
 
             return {
                 time: parsedTime,
@@ -112,28 +119,31 @@ function filterData() {
     const filterType = filterSelect.value;
     const startDate = new Date(startDateInput.value);
     const endDate = new Date(endDateInput.value);
-    endDate.setHours(23, 59, 59); // Include the entire end day
+    endDate.setHours(23, 59, 59);
 
-    const now = new Date();
     let filteredData;
+
+    if (!latestDateInData) {
+        return []; // No data loaded yet
+    }
 
     switch (filterType) {
         case 'weekly':
-            const weekAgo = new Date();
-            weekAgo.setDate(now.getDate() - 7);
-            filteredData = rawData.filter(d => d.time >= weekAgo);
+            const weekAgo = new Date(latestDateInData);
+            weekAgo.setDate(latestDateInData.getDate() - 7);
+            filteredData = rawData.filter(d => d.time >= weekAgo && d.time <= latestDateInData);
             break;
 
         case 'monthly':
-            const monthAgo = new Date();
-            monthAgo.setMonth(now.getMonth() - 1);
-            filteredData = rawData.filter(d => d.time >= monthAgo);
+            const monthAgo = new Date(latestDateInData);
+            monthAgo.setMonth(latestDateInData.getMonth() - 1);
+            filteredData = rawData.filter(d => d.time >= monthAgo && d.time <= latestDateInData);
             break;
 
         case 'yearly':
-            const yearAgo = new Date();
-            yearAgo.setFullYear(now.getFullYear() - 1);
-            filteredData = rawData.filter(d => d.time >= yearAgo);
+            const yearAgo = new Date(latestDateInData);
+            yearAgo.setFullYear(latestDateInData.getFullYear() - 1);
+            filteredData = rawData.filter(d => d.time >= yearAgo && d.time <= latestDateInData);
             break;
 
         case 'custom':
@@ -148,7 +158,6 @@ function filterData() {
             filteredData = [...rawData];
     }
 
-    // Sort by date
     return filteredData.sort((a, b) => a.time - b.time);
 }
 
@@ -236,12 +245,17 @@ function createChart(metric, labels, metricData, container) {
 
 // Create or update charts
 function updateCharts() {
+    if (!latestDateInData) {
+        alert("Por favor, carga un archivo CSV primero.");
+        return;
+    }
+
     const data = filterData();
     if (data.length === 0) {
         alert("No hay datos disponibles para el período seleccionado");
         dateRangeInfo.textContent = "No hay datos para el período seleccionado";
-        chartsContainer.innerHTML = ''; // Clear previous charts
-        latestDataContainer.innerHTML = ''; // Clear latest data
+        chartsContainer.innerHTML = '';
+        latestDataContainer.innerHTML = '';
         return;
     }
 
@@ -254,14 +268,16 @@ function updateCharts() {
         .map(cb => cb.value)
         .sort((a, b) => metricInfo[a].order - metricInfo[b].order);
 
-    chartsContainer.innerHTML = ''; // Clear previous charts
-    latestDataContainer.innerHTML = ''; // Clear previous latest data
+    chartsContainer.innerHTML = '';
+    latestDataContainer.innerHTML = '';
 
-    // Display latest measurement
-    if (data.length > 0) {
-        const latestDataPoint = data[data.length - 1];
+    // Display the absolute latest measurement from the raw data
+    if (rawData.length > 0) {
+        const absoluteLatestDataPoint = rawData.reduce((latest, current) => {
+            return current.time > latest.time ? current : latest;
+        });
         selectedMetrics.forEach(metric => {
-            const value = latestDataPoint[metric];
+            const value = absoluteLatestDataPoint[metric];
             const unitText = metricInfo[metric].unit ? ` ${metricInfo[metric].unit}` : '';
             const itemDiv = document.createElement('div');
             itemDiv.className = 'latest-data-item';
@@ -293,7 +309,7 @@ function updateCharts() {
         const progressData = selectedMetrics.map(metric => {
             const firstValue = data[0][metric];
             const lastValue = data[data.length - 1][metric];
-            if (firstValue === 0) return 0; // Avoid division by zero
+            if (firstValue === 0) return 0;
             return ((lastValue - firstValue) / firstValue) * 100;
         });
         const backgroundColors = progressData.map(progress => progress >= 0 ? chartColors.success.color : chartColors.danger.color);
@@ -357,7 +373,6 @@ function initializeDateInputs() {
     endDateInput.valueAsDate = today;
     startDateInput.valueAsDate = lastYear;
 
-    // Initially hide date inputs unless custom filter is selected
     handleFilterChange();
 }
 
@@ -365,7 +380,6 @@ function initializeDateInputs() {
 window.onload = function() {
     initializeDateInputs();
 
-    // Check if user has previously uploaded data (for demo purposes)
     if (localStorage.getItem('hasData') === 'true') {
         dateRangeInfo.textContent = "Selecciona un archivo CSV para comenzar";
     }
