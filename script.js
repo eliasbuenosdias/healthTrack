@@ -169,6 +169,7 @@ function filterData() {
     console.log("Number of data points after filtering:", filteredData.length);
     return filteredData.sort((a, b) => a.time - b.time);
 }
+
 // Function to create a single chart
 function createChart(metric, labels, metricData, container) {
     console.log("Métrica actual:", metric);
@@ -279,17 +280,22 @@ function updateCharts() {
     chartsContainer.innerHTML = '';
     latestDataContainer.innerHTML = '';
 
+    console.log("rawData:", rawData); // Added log
     // Display the absolute latest measurement from the raw data
     if (rawData.length > 0) {
         const absoluteLatestDataPoint = rawData.reduce((latest, current) => {
             return current.time > latest.time ? current : latest;
         });
+        console.log("Absolute Latest Data Point:", absoluteLatestDataPoint); // Added log
+        console.log("Selected Metrics:", selectedMetrics); // Added log
         selectedMetrics.forEach(metric => {
+            console.log("Current Metric:", metric); // Added log
             const value = absoluteLatestDataPoint[metric];
+            console.log("Value for", metric + ":", value); // Added log
             const unitText = metricInfo[metric].unit ? ` ${metricInfo[metric].unit}` : '';
             const itemDiv = document.createElement('div');
             itemDiv.className = 'latest-data-item';
-            itemDiv.innerHTML = `<h4>${metricInfo[metric].title}</h4><p>${value.toFixed(1)}${unitText}</p>`;
+            itemDiv.innerHTML = `<h4>${metricInfo[metric].title}</h4><p>${value !== undefined && value !== null ? value.toFixed(1) : 'NaN'}${unitText}</p>`;
             latestDataContainer.appendChild(itemDiv);
         });
     }
