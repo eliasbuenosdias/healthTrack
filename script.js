@@ -279,18 +279,70 @@ function updateCharts(header) {
             return current.time > latest.time ? current : latest;
         });
 
-        orderedMetrics.forEach(metricName => {
-            if (absoluteLatestDataPoint.hasOwnProperty(metricName)) {
-                const value = absoluteLatestDataPoint[metricName];
-                const unit = metricInfo[metricName.toLowerCase()]?.unit || '';
-                const title = metricInfo[metricName.toLowerCase()]?.title || metricName;
-                const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
-                if (formattedValue !== undefined && formattedValue !== null) {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'latest-data-item';
-                    itemDiv.innerHTML = `<p><strong>${title}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
-                    latestDataContainer.appendChild(itemDiv);
+        // First, get all available metrics from the header (if available) or from the data point
+        const availableMetrics = csvHeader.filter(header => header.toLowerCase() !== 'time');
+        
+        // Create a map to standardize metric names
+        const metricNameMap = {};
+        for (const key in metricInfo) {
+            // Create mappings for various possible naming formats
+            metricNameMap[key.toLowerCase()] = key;
+            metricNameMap[metricInfo[key].title.toLowerCase()] = key;
+            // Remove spaces and special characters for additional matching
+            metricNameMap[metricInfo[key].title.toLowerCase().replace(/\s+/g, '')] = key;
+        }
+
+        // Process each metric in the ordered list if available, otherwise show all available metrics
+        const metricsToShow = orderedMetrics.length > 0 ? orderedMetrics : availableMetrics;
+        
+        metricsToShow.forEach(originalMetricName => {
+            // Try to find the metric in the data point using various possible name formats
+            let metricName = originalMetricName;
+            let metricValue = absoluteLatestDataPoint[metricName];
+            
+            // If value is not found directly, try normalized versions
+            if (metricValue === undefined) {
+                const normalizedName = metricName.toLowerCase();
+                // Check if we have a mapping for this name
+                const mappedName = metricNameMap[normalizedName];
+                if (mappedName) {
+                    metricValue = absoluteLatestDataPoint[mappedName];
                 }
+                
+                // If still not found, try all possible keys in the data point
+                if (metricValue === undefined) {
+                    for (const key in absoluteLatestDataPoint) {
+                        if (key.toLowerCase() === normalizedName || 
+                            key.toLowerCase().replace(/\s+/g, '') === normalizedName) {
+                            metricValue = absoluteLatestDataPoint[key];
+                            metricName = key; // Use the actual key found in the data
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Only display if we found a value
+            if (metricValue !== undefined && metricValue !== null && !isNaN(metricValue)) {
+                // Get the appropriate title and unit information
+                let title = metricName;
+                let unit = '';
+                
+                // Try to find metadata for this metric
+                const normalizedName = metricName.toLowerCase();
+                const infoKey = metricNameMap[normalizedName] || normalizedName;
+                
+                if (metricInfo[infoKey]) {
+                    title = metricInfo[infoKey].title;
+                    unit = metricInfo[infoKey].unit;
+                }
+                
+                const formattedValue = typeof metricValue === 'number' ? metricValue.toFixed(1) : metricValue;
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'latest-data-item';
+                itemDiv.innerHTML = `<p><strong>${title}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
+                latestDataContainer.appendChild(itemDiv);
             }
         });
     }
