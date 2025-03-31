@@ -80,19 +80,19 @@ function handleFileUpload(event) {
 function parseCSV(csv) {
     const lines = csv.split('\n');
 
-    // Skip empty lines
+    // Skip empty lines and remove header row check
     return lines.filter(line => line.trim() !== '')
         .map(line => {
             const values = line.split(',').map(v => v.trim());
             if (values.length < 10) return null; // Skip incomplete lines
 
-            // Check if this is a header row
-            if (isNaN(parseFloat(values[1]))) return null;
-
             const [time, weight, height, bmi, fatRate, bodyWaterRate, boneMass, metabolism, muscleRate, visceralFat] = values;
 
+            const parsedTime = new Date(time);
+            if (isNaN(parsedTime)) return null; // Skip lines with invalid date
+
             return {
-                time: new Date(time),
+                time: parsedTime,
                 weight: parseFloat(weight),
                 height: parseFloat(height),
                 bmi: parseFloat(bmi),
@@ -126,24 +126,7 @@ function filterData() {
 
         case 'monthly':
             const monthAgo = new Date();
-            const currentMonth = now.getMonth();
-            monthAgo.setMonth(currentMonth - 1);
-
-            // Handle cases where subtracting a month goes to the previous year
-            if (monthAgo.getMonth() > currentMonth && currentMonth !== 0) {
-                monthAgo.setFullYear(now.getFullYear() - 1);
-            } else if (currentMonth === 0 && monthAgo.getMonth() === 11) {
-                monthAgo.setFullYear(now.getFullYear() - 1);
-            }
-
-            // Ensure the day of the month is valid for the previous month
-            const daysInPreviousMonth = new Date(monthAgo.getFullYear(), monthAgo.getMonth() + 1, 0).getDate();
-            if (now.getDate() > daysInPreviousMonth) {
-                monthAgo.setDate(daysInPreviousMonth);
-            } else {
-                monthAgo.setDate(now.getDate());
-            }
-
+            monthAgo.setMonth(now.getMonth() - 1);
             filteredData = rawData.filter(d => d.time >= monthAgo);
             break;
 
