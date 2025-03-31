@@ -1,5 +1,5 @@
 
-📊 Estadísticas de la Báscula - WebApp para Visualizar Datos Corporales
+📊 Estadísticas de la Báscula - WebApp para Visualizar Datos Corporales de la mi scale2 (xiaomi)
 
 Esta webapp permite a los usuarios realizar un seguimiento y visualizar sus datos de composición corporal de manera sencilla. Simplemente carga un archivo CSV 📁 exportado desde tu báscula inteligente u otra fuente de datos, y la aplicación generará gráficos interactivos 📈 para ayudarte a entender tu progreso a lo largo del tiempo.
 
