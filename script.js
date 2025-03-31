@@ -14,13 +14,14 @@ const chartColors = {
 // Metric titles and units for better readability
 const metricInfo = {
     weight: { title: 'Peso Corporal', unit: 'kg', order: 1 },
-    bmi: { title: 'Índice de Masa Corporal', unit: '', order: 2 },
-    fatRate: { title: 'Porcentaje de Grasa Corporal', unit: '%', order: 3 },
-    muscleRate: { title: 'Porcentaje de Músculo', unit: '%', order: 4 },
-    visceralFat: { title: 'Grasa Visceral', unit: '', order: 5 },
-    bodyWaterRate: { title: 'Porcentaje de Agua Corporal', unit: '%', order: 6 },
-    boneMass: { title: 'Masa Ósea', unit: 'kg', order: 7 },
-    metabolism: { title: 'Metabolismo Basal', unit: 'kcal', order: 8 }
+    height: { title: 'Altura', unit: 'cm', order: 2 }, // Añadido altura
+    bmi: { title: 'Índice de Masa Corporal', unit: '', order: 3 },
+    fatRate: { title: 'Porcentaje de Grasa Corporal', unit: '%', order: 4 },
+    muscleRate: { title: 'Porcentaje de Músculo', unit: '%', order: 5 },
+    visceralFat: { title: 'Grasa Visceral', unit: '', order: 6 },
+    bodyWaterRate: { title: 'Porcentaje de Agua Corporal', unit: '%', order: 7 },
+    boneMass: { title: 'Masa Ósea', unit: 'kg', order: 8 },
+    metabolism: { title: 'Metabolismo Basal', unit: 'kcal', order: 9 }
 };
 
 let rawData = [];
@@ -39,7 +40,7 @@ const dateRangeInfo = document.getElementById('dateRangeInfo');
 const latestDataContainer = document.getElementById('latestDataContainer');
 
 // Ordered list of metrics to display in the "Último Dato Insertado" section
-const orderedMetrics = ['weight', 'bmi', 'fatRate', 'boneMass', 'metabolism', 'muscleRate', 'visceralFat', 'bodyWaterRate'];
+const orderedMetrics = ['weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism', 'muscleRate', 'visceralFat'];
 
 // Event Listeners
 fileInput.addEventListener('change', handleFileUpload);
@@ -107,7 +108,7 @@ function parseCSV(csv, header) {
                     const parsedTime = new Date(values[index]);
                     entry['time'] = isNaN(parsedTime) ? null : parsedTime;
                 } else {
-                    const numValue = parseFloat(values[index]);
+                    const numValue = parseFloat(values[index].replace(',', '.'));
                     entry[col] = isNaN(numValue) ? values[index] : numValue;
                 }
             });
@@ -171,7 +172,7 @@ function createChart(metric, labels, metricData, container) {
 
     const chartTitle = document.createElement('div');
     chartTitle.className = 'chart-title';
-    chartTitle.textContent = metric; // Use the metric name from the header
+    chartTitle.textContent = metricInfo[metric.toLowerCase()]?.title || metric; // Use title from metricInfo if available
 
     const canvas = document.createElement('canvas');
     canvas.id = metric + 'Chart';
@@ -211,7 +212,7 @@ function createChart(metric, labels, metricData, container) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: metric,
+                    label: metricInfo[metric.toLowerCase()]?.title || metric,
                     data: metricData,
                     borderColor: metricColor.color,
                     backgroundColor: type === 'bar' ? metricColor.color : metricColor.background,
@@ -273,76 +274,35 @@ function updateCharts(header) {
     chartsContainer.innerHTML = '';
     latestDataContainer.innerHTML = '<h4>Último Dato Insertado</h4>';
 
-    // Display the absolute latest measurement from the raw data in the specified order
+    // Display the absolute latest measurement from the raw data
     if (rawData.length > 0) {
+        // Get the latest data point
         const absoluteLatestDataPoint = rawData.reduce((latest, current) => {
             return current.time > latest.time ? current : latest;
         });
 
-        // First, get all available metrics from the header (if available) or from the data point
-        const availableMetrics = csvHeader.filter(header => header.toLowerCase() !== 'time');
+        // Log for debugging
+        console.log("Latest data point:", absoluteLatestDataPoint);
         
-        // Create a map to standardize metric names
-        const metricNameMap = {};
-        for (const key in metricInfo) {
-            // Create mappings for various possible naming formats
-            metricNameMap[key.toLowerCase()] = key;
-            metricNameMap[metricInfo[key].title.toLowerCase()] = key;
-            // Remove spaces and special characters for additional matching
-            metricNameMap[metricInfo[key].title.toLowerCase().replace(/\s+/g, '')] = key;
-        }
-
-        // Process each metric in the ordered list if available, otherwise show all available metrics
-        const metricsToShow = orderedMetrics.length > 0 ? orderedMetrics : availableMetrics;
-        
-        metricsToShow.forEach(originalMetricName => {
-            // Try to find the metric in the data point using various possible name formats
-            let metricName = originalMetricName;
-            let metricValue = absoluteLatestDataPoint[metricName];
+        // For each metric we want to display
+        orderedMetrics.forEach(metricName => {
+            // Find the exact column name in the header that matches our metric
+            const exactMatch = csvHeader.find(header => 
+                header.toLowerCase() === metricName.toLowerCase()
+            );
             
-            // If value is not found directly, try normalized versions
-            if (metricValue === undefined) {
-                const normalizedName = metricName.toLowerCase();
-                // Check if we have a mapping for this name
-                const mappedName = metricNameMap[normalizedName];
-                if (mappedName) {
-                    metricValue = absoluteLatestDataPoint[mappedName];
+            if (exactMatch && absoluteLatestDataPoint[exactMatch] !== undefined) {
+                const value = absoluteLatestDataPoint[exactMatch];
+                // Only display if the value is valid
+                if (value !== null && !isNaN(value)) {
+                    const info = metricInfo[metricName.toLowerCase()] || { title: metricName, unit: '' };
+                    const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
+                    
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'latest-data-item';
+                    itemDiv.innerHTML = `<p><strong>${info.title}:</strong> ${formattedValue}${info.unit ? ` ${info.unit}` : ''}</p>`;
+                    latestDataContainer.appendChild(itemDiv);
                 }
-                
-                // If still not found, try all possible keys in the data point
-                if (metricValue === undefined) {
-                    for (const key in absoluteLatestDataPoint) {
-                        if (key.toLowerCase() === normalizedName || 
-                            key.toLowerCase().replace(/\s+/g, '') === normalizedName) {
-                            metricValue = absoluteLatestDataPoint[key];
-                            metricName = key; // Use the actual key found in the data
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // Only display if we found a value
-            if (metricValue !== undefined && metricValue !== null && !isNaN(metricValue)) {
-                // Get the appropriate title and unit information
-                let title = metricName;
-                let unit = '';
-                
-                // Try to find metadata for this metric
-                const normalizedName = metricName.toLowerCase();
-                const infoKey = metricNameMap[normalizedName] || normalizedName;
-                
-                if (metricInfo[infoKey]) {
-                    title = metricInfo[infoKey].title;
-                    unit = metricInfo[infoKey].unit;
-                }
-                
-                const formattedValue = typeof metricValue === 'number' ? metricValue.toFixed(1) : metricValue;
-                
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'latest-data-item';
-                itemDiv.innerHTML = `<p><strong>${title}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
-                latestDataContainer.appendChild(itemDiv);
             }
         });
     }
