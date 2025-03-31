@@ -11,21 +11,13 @@ const chartColors = {
     success: { color: '#28a745' }, // Añade un color para éxito
     danger: { color: '#dc3545' }      // Añade un color para peligro
 };
-// Metric titles and units for better readability
-const metricInfo = {
-    weight: { title: 'Peso Corporal', unit: 'kg', order: 1 },
-    bmi: { title: 'Índice de Masa Corporal', unit: '', order: 2 },
-    fatRate: { title: 'Porcentaje de Grasa Corporal', unit: '%', order: 3 },
-    muscleRate: { title: 'Porcentaje de Músculo', unit: '%', order: 4 },
-    visceralFat: { title: 'Grasa Visceral', unit: '', order: 5 },
-    bodyWaterRate: { title: 'Porcentaje de Agua Corporal', unit: '%', order: 6 },
-    boneMass: { title: 'Masa Ósea', unit: 'kg', order: 7 },
-    metabolism: { title: 'Metabolismo Basal', unit: 'kcal', order: 8 }
-};
+// Metric titles and units for better readability (can be empty now)
+const metricInfo = {};
 
 let rawData = [];
 let latestDateInData;
 let charts = {};
+let csvHeader = [];
 
 // DOM Elements
 const fileInput = document.getElementById('fileInput');
@@ -60,24 +52,27 @@ function handleFileUpload(event) {
 
     const reader = new FileReader();
     reader.onload = e => {
-        try {
-            rawData = parseCSV(e.target.result);
+        const csvContent = e.target.result;
+        const lines = csvContent.split('\n');
+        if (lines.length > 0) {
+            csvHeader = lines[0].split(',').map(header => header.trim());
+            const dataLines = lines.slice(1);
+            rawData = parseCSV(dataLines.join('\n'), csvHeader);
             if (rawData.length > 0) {
                 // Determine the latest date in the data
                 latestDateInData = rawData.reduce((maxDate, current) => {
                     return current.time > maxDate ? current.time : maxDate;
                 }, new Date(0)); // Initialize with a very early date
 
-                updateCharts();
+                updateCharts(csvHeader);
             } else {
                 alert("No se pudieron procesar datos válidos del archivo CSV.");
                 dateRangeInfo.textContent = "No hay datos válidos en el archivo";
                 latestDateInData = null;
             }
-        } catch (error) {
-            console.error("Error processing CSV:", error);
-            alert("Error al procesar el archivo CSV: " + error.message);
-            dateRangeInfo.textContent = "Error al procesar el archivo";
+        } else {
+            alert("El archivo CSV está vacío.");
+            dateRangeInfo.textContent = "El archivo CSV está vacío";
             latestDateInData = null;
         }
     };
@@ -85,33 +80,28 @@ function handleFileUpload(event) {
 }
 
 // Parse CSV data
-function parseCSV(csv) {
+function parseCSV(csv, header) {
     const lines = csv.split('\n');
-
     return lines.filter(line => line.trim() !== '')
         .map(line => {
             const values = line.split(',').map(v => v.trim());
-            if (values.length < 10) return null;
+            if (values.length !== header.length) return null;
 
-            const [time, weight, height, bmi, fatRate, bodyWaterRate, boneMass, metabolism, muscleRate, visceralFat] = values;
-
-            const parsedTime = new Date(time);
-            if (isNaN(parsedTime)) return null;
-
-            return {
-                time: parsedTime,
-                weight: parseFloat(weight),
-                height: parseFloat(height),
-                bmi: parseFloat(bmi),
-                fatRate: parseFloat(fatRate),
-                bodyWaterRate: parseFloat(bodyWaterRate),
-                boneMass: parseFloat(boneMass),
-                metabolism: parseFloat(metabolism),
-                muscleRate: parseFloat(muscleRate),
-                visceralFat: parseFloat(visceralFat)
-            };
+            const entry = {};
+            let timeIndex = -1;
+            header.forEach((col, index) => {
+                if (col.toLowerCase() === 'time') {
+                    timeIndex = index;
+                    const parsedTime = new Date(values[index]);
+                    entry['time'] = isNaN(parsedTime) ? null : parsedTime;
+                } else {
+                    const numValue = parseFloat(values[index]);
+                    entry[col] = isNaN(numValue) ? values[index] : numValue;
+                }
+            });
+            return entry.time === null ? null : entry;
         })
-        .filter(entry => entry && !isNaN(entry.time) && !isNaN(entry.weight));
+        .filter(entry => entry && !isNaN(entry.time));
 }
 
 // Filter data based on selected time range
@@ -124,37 +114,30 @@ function filterData() {
     let filteredData;
 
     if (!latestDateInData) {
-        console.log("latestDateInData is not set.");
         return []; // No data loaded yet
     }
-
-    console.log("Latest date in data:", latestDateInData);
 
     switch (filterType) {
         case 'weekly':
             const weekAgo = new Date(latestDateInData);
             weekAgo.setDate(latestDateInData.getDate() - 7);
-            console.log("Weekly filter: from", weekAgo, "to", latestDateInData);
             filteredData = rawData.filter(d => d.time >= weekAgo && d.time <= latestDateInData);
             break;
 
         case 'monthly':
             const monthAgo = new Date(latestDateInData);
             monthAgo.setMonth(latestDateInData.getMonth() - 1);
-            console.log("Monthly filter: from", monthAgo, "to", latestDateInData);
             filteredData = rawData.filter(d => d.time >= monthAgo && d.time <= latestDateInData);
             break;
 
         case 'yearly':
             const yearAgo = new Date(latestDateInData);
             yearAgo.setFullYear(latestDateInData.getFullYear() - 1);
-            console.log("Yearly filter: from", yearAgo, "to", latestDateInData);
             filteredData = rawData.filter(d => d.time >= yearAgo && d.time <= latestDateInData);
             break;
 
         case 'custom':
             if (!isNaN(startDate) && !isNaN(endDate)) {
-                console.log("Custom filter: from", startDate, "to", endDate);
                 filteredData = rawData.filter(d => d.time >= startDate && d.time <= endDate);
             } else {
                 filteredData = rawData;
@@ -162,24 +145,21 @@ function filterData() {
             break;
 
         default: // 'all'
-            console.log("All data filter.");
             filteredData = [...rawData];
     }
 
-    console.log("Number of data points after filtering:", filteredData.length);
     return filteredData.sort((a, b) => a.time - b.time);
 }
 
 // Function to create a single chart
 function createChart(metric, labels, metricData, container) {
-    console.log("Métrica actual:", metric);
     const chartWrapper = document.createElement('div');
     chartWrapper.className = 'chart-wrapper';
     chartWrapper.id = `chart-wrapper-${metric}`;
 
     const chartTitle = document.createElement('div');
     chartTitle.className = 'chart-title';
-    chartTitle.textContent = metricInfo[metric].title;
+    chartTitle.textContent = metric; // Use the metric name from the header
 
     const canvas = document.createElement('canvas');
     canvas.id = metric + 'Chart';
@@ -212,15 +192,17 @@ function createChart(metric, labels, metricData, container) {
             chartInstance.destroy();
         }
 
+        const metricColor = chartColors[metric.toLowerCase()] || { color: '#777', background: 'rgba(119, 119, 119, 0.1)' };
+
         chartInstance = new Chart(ctx, {
             type: type,
             data: {
                 labels: labels,
                 datasets: [{
-                    label: metricInfo[metric].title + (metricInfo[metric].unit ? ` ${metricInfo[metric].unit}` : ''),
+                    label: metric,
                     data: metricData,
-                    borderColor: chartColors[metric].color,
-                    backgroundColor: type === 'bar' ? chartColors[metric].color : chartColors[metric].background,
+                    borderColor: metricColor.color,
+                    backgroundColor: type === 'bar' ? metricColor.color : metricColor.background,
                     borderWidth: 3,
                     pointRadius: 4,
                     pointHoverRadius: 6,
@@ -235,7 +217,7 @@ function createChart(metric, labels, metricData, container) {
                 scales: {
                     x: { grid: { display: false } },
                     y: {
-                        beginAtZero: metric === 'visceralFat' ? true : false,
+                        beginAtZero: metric.toLowerCase().includes('fat') || metric.toLowerCase().includes('visceral') ? true : false,
                         suggestedMin: getMinValue(metricData, 0.9),
                         suggestedMax: getMaxValue(metricData, 1.1)
                     }
@@ -253,7 +235,7 @@ function createChart(metric, labels, metricData, container) {
 }
 
 // Create or update charts
-function updateCharts() {
+function updateCharts(header) {
     if (!latestDateInData) {
         alert("Por favor, carga un archivo CSV primero.");
         return;
@@ -274,35 +256,37 @@ function updateCharts() {
     });
 
     const selectedMetrics = Array.from(document.querySelectorAll('input[type=checkbox]:checked'))
-        .map(cb => cb.value)
-        .sort((a, b) => metricInfo[a].order - metricInfo[b].order);
+        .map(cb => cb.value);
 
     chartsContainer.innerHTML = '';
     latestDataContainer.innerHTML = '';
 
-    console.log("rawData:", rawData); // Added log
     // Display the absolute latest measurement from the raw data
     if (rawData.length > 0) {
         const absoluteLatestDataPoint = rawData.reduce((latest, current) => {
             return current.time > latest.time ? current : latest;
         });
-        console.log("Absolute Latest Data Point:", absoluteLatestDataPoint); // Added log
-        console.log("Selected Metrics:", selectedMetrics); // Added log
-        selectedMetrics.forEach(metric => {
-            console.log("Current Metric:", metric); // Added log
-            const value = absoluteLatestDataPoint[metric];
-            console.log("Value for", metric + ":", value); // Added log
-            const unitText = metricInfo[metric].unit ? ` ${metricInfo[metric].unit}` : '';
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'latest-data-item';
-            itemDiv.innerHTML = `<h4>${metricInfo[metric].title}</h4><p>${value !== undefined && value !== null ? value.toFixed(1) : 'NaN'}${unitText}</p>`;
-            latestDataContainer.appendChild(itemDiv);
+        latestDataContainer.innerHTML = '<h4>Último Dato Insertado</h4>';
+        header.forEach(columnName => {
+            if (columnName.toLowerCase() !== 'time') {
+                const value = absoluteLatestDataPoint[columnName];
+                const unit = metricInfo[columnName.toLowerCase()]?.unit || '';
+                const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
+                if (formattedValue !== undefined && formattedValue !== null) {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'latest-data-item';
+                    itemDiv.innerHTML = `<p><strong>${columnName}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
+                    latestDataContainer.appendChild(itemDiv);
+                }
+            }
         });
     }
 
     selectedMetrics.forEach(metric => {
-        const metricData = data.map(d => d[metric]);
-        createChart(metric, labels, metricData, chartsContainer);
+        if (header.includes(metric)) {
+            const metricData = data.map(d => d[metric]);
+            createChart(metric, labels, metricData, chartsContainer);
+        }
     });
 
     // Add percentage progress chart
@@ -319,14 +303,16 @@ function updateCharts() {
         chartsContainer.appendChild(progressChartWrapper);
 
         const progressCtx = progressCanvas.getContext('2d');
-        const progressLabels = selectedMetrics.map(metric => metricInfo[metric].title);
-        const progressData = selectedMetrics.map(metric => {
+        const progressLabels = selectedMetrics.filter(metric => header.includes(metric));
+        const progressData = progressLabels.map(metric => {
             const firstValue = data[0][metric];
             const lastValue = data[data.length - 1][metric];
-            if (firstValue === 0) return 0;
-            return ((lastValue - firstValue) / firstValue) * 100;
+            if (typeof firstValue === 'number' && typeof lastValue === 'number' && firstValue !== 0) {
+                return ((lastValue - firstValue) / firstValue) * 100;
+            }
+            return NaN;
         });
-        const backgroundColors = progressData.map(progress => progress >= 0 ? chartColors.success.color : chartColors.danger.color);
+        const backgroundColors = progressData.map(progress => !isNaN(progress) && progress >= 0 ? chartColors.success.color : chartColors.danger.color);
 
         new Chart(progressCtx, {
             type: 'bar',
@@ -355,13 +341,17 @@ function updateCharts() {
 
 // Calculate min/max values
 function getMinValue(data, factor) {
-    const min = Math.min(...data);
-    return min * factor;
+    const validData = data.filter(value => typeof value === 'number');
+    if (validData.length === 0) return 0;
+    const min = Math.min(...validData);
+    return isFinite(min) ? min * factor : 0;
 }
 
 function getMaxValue(data, factor) {
-    const max = Math.max(...data);
-    return max * factor;
+    const validData = data.filter(value => typeof value === 'number');
+    if (validData.length === 0) return 1;
+    const max = Math.max(...validData);
+    return isFinite(max) ? max * factor : 1;
 }
 
 // Display date range summary
