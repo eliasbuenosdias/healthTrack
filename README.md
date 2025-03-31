@@ -3,6 +3,9 @@
 
 Esta webapp permite a los usuarios realizar un seguimiento y visualizar sus datos de composición corporal de manera sencilla. Simplemente carga un archivo CSV 📁 exportado desde tu báscula inteligente u otra fuente de datos, y la aplicación generará gráficos interactivos 📈 para ayudarte a entender tu progreso a lo largo del tiempo.
 
+![image](https://github.com/user-attachments/assets/a5fd5b87-5e0f-4f49-9a37-984f7bdc2fe0)
+
+
 ✨ Características principales:
 
 - Importación de datos CSV: Carga fácilmente tus datos de composición corporal desde archivos CSV 📄.
@@ -16,6 +19,8 @@ Esta webapp permite a los usuarios realizar un seguimiento y visualizar sus dato
 - Análisis de progreso: Observa el cambio porcentual de tus métricas a lo largo del tiempo con un gráfico de progreso ✅.
 
 - Selección de métricas: Elige qué métricas específicas quieres visualizar y analizar
+
+  
 
 ⚙️ Cómo usar:
 
