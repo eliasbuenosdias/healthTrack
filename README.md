@@ -40,6 +40,13 @@ Esta webapp permite a los usuarios realizar un seguimiento y visualizar sus dato
 - JavaScript
 - Chart.js para la creación de gráficos interactivos.
 
+ℹ️ Info:
+- Los datos son de la ultima semana
+- Los datos son del mes del mes anterior
+- Los datos son del año anterior
+
+Si esa semana no tiene datos no muestra nada, lo mismo con el mes o el año.
+
 🚀 Futuras Mejoras
 
 Posibles mejoras para futuras versiones de la webapp:
