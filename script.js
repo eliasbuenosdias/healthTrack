@@ -249,7 +249,7 @@ function updateCharts() {
         const date = new Date(d.time);
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
     });
-
+   
     const selectedMetrics = Array.from(document.querySelectorAll('input[type=checkbox]:checked'))
         .map(cb => cb.value)
         .sort((a, b) => metricInfo[a].order - metricInfo[b].order);
@@ -269,7 +269,7 @@ function updateCharts() {
             latestDataContainer.appendChild(itemDiv);
         });
     }
-
+    const currentHeader = header || csvHeader; // Use csvHeader if header is undefined
     selectedMetrics.forEach(metric => {
         const metricData = data.map(d => d[metric]);
         createChart(metric, labels, metricData, chartsContainer);
