@@ -1,6 +1,6 @@
 🚧 Proyecto en Construcción 🚧
 
-Estamos trabajando arduamente para mejorar esta funcionalidad. Por el momento, algunas características podrían no estar completamente operativas o presentar problemas.
+Estoy trabajando arduamente para mejorar esta funcionalidad. Por el momento, algunas características podrían no estar completamente operativas o presentar problemas.
 
 ⚠️ Aviso: La visualización de iconos de GitHub podría no funcionar correctamente en este momento.
 
