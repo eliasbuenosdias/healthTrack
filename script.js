@@ -24,9 +24,7 @@ const metricInfo = {
 };
 
 let rawData = [];
-let latestDateInData;
 let charts = {};
-let csvHeader = [];
 
 // DOM Elements
 const fileInput = document.getElementById('fileInput');
@@ -37,9 +35,6 @@ const updateButton = document.getElementById('updateButton');
 const chartsContainer = document.getElementById('chartsContainer');
 const dateRangeInfo = document.getElementById('dateRangeInfo');
 const latestDataContainer = document.getElementById('latestDataContainer');
-
-// Ordered list of metrics to display in the "Último Dato Insertado" section
-const orderedMetrics = ['weight', 'bmi', 'fatRate', 'boneMass', 'metabolism', 'muscleRate', 'visceralFat', 'bodyWaterRate'];
 
 // Event Listeners
 fileInput.addEventListener('change', handleFileUpload);
@@ -64,56 +59,52 @@ function handleFileUpload(event) {
 
     const reader = new FileReader();
     reader.onload = e => {
-        const csvContent = e.target.result;
-        const lines = csvContent.split('\n');
-        if (lines.length > 0) {
-            csvHeader = lines[0].split(',').map(header => header.trim());
-            const dataLines = lines.slice(1);
-            rawData = parseCSV(dataLines.join('\n'), csvHeader);
+        try {
+            rawData = parseCSV(e.target.result);
             if (rawData.length > 0) {
-                // Determine the latest date in the data
-                latestDateInData = rawData.reduce((maxDate, current) => {
-                    return current.time > maxDate ? current.time : maxDate;
-                }, new Date(0)); // Initialize with a very early date
-
-                updateCharts(csvHeader);
+                updateCharts();
             } else {
                 alert("No se pudieron procesar datos válidos del archivo CSV.");
                 dateRangeInfo.textContent = "No hay datos válidos en el archivo";
-                latestDateInData = null;
             }
-        } else {
-            alert("El archivo CSV está vacío.");
-            dateRangeInfo.textContent = "El archivo CSV está vacío";
-            latestDateInData = null;
+        } catch (error) {
+            console.error("Error processing CSV:", error);
+            alert("Error al procesar el archivo CSV: " + error.message);
+            dateRangeInfo.textContent = "Error al procesar el archivo";
         }
     };
     reader.readAsText(file);
 }
 
 // Parse CSV data
-function parseCSV(csv, header) {
+function parseCSV(csv) {
     const lines = csv.split('\n');
+
+    // Skip empty lines
     return lines.filter(line => line.trim() !== '')
         .map(line => {
             const values = line.split(',').map(v => v.trim());
-            if (values.length !== header.length) return null;
+            if (values.length < 10) return null; // Skip incomplete lines
 
-            const entry = {};
-            let timeIndex = -1;
-            header.forEach((col, index) => {
-                if (col.toLowerCase() === 'time') {
-                    timeIndex = index;
-                    const parsedTime = new Date(values[index]);
-                    entry['time'] = isNaN(parsedTime) ? null : parsedTime;
-                } else {
-                    const numValue = parseFloat(values[index]);
-                    entry[col] = isNaN(numValue) ? values[index] : numValue;
-                }
-            });
-            return entry.time === null ? null : entry;
+            // Check if this is a header row
+            if (isNaN(parseFloat(values[1]))) return null;
+
+            const [time, weight, height, bmi, fatRate, bodyWaterRate, boneMass, metabolism, muscleRate, visceralFat] = values;
+
+            return {
+                time: new Date(time),
+                weight: parseFloat(weight),
+                height: parseFloat(height),
+                bmi: parseFloat(bmi),
+                fatRate: parseFloat(fatRate),
+                bodyWaterRate: parseFloat(bodyWaterRate),
+                boneMass: parseFloat(boneMass),
+                metabolism: parseFloat(metabolism),
+                muscleRate: parseFloat(muscleRate),
+                visceralFat: parseFloat(visceralFat)
+            };
         })
-        .filter(entry => entry && !isNaN(entry.time));
+        .filter(entry => entry && !isNaN(entry.time) && !isNaN(entry.weight));
 }
 
 // Filter data based on selected time range
@@ -121,42 +112,32 @@ function filterData() {
     const filterType = filterSelect.value;
     const startDate = new Date(startDateInput.value);
     const endDate = new Date(endDateInput.value);
-    endDate.setHours(23, 59, 59);
+    endDate.setHours(23, 59, 59); // Include the entire end day
 
+    const now = new Date();
     let filteredData;
-
-    if (!latestDateInData) {
-        console.log("latestDateInData is not set.");
-        return []; // No data loaded yet
-    }
-
-    console.log("Latest date in data:", latestDateInData);
 
     switch (filterType) {
         case 'weekly':
-            const weekAgo = new Date(latestDateInData);
-            weekAgo.setDate(latestDateInData.getDate() - 7);
-            console.log("Weekly filter: from", weekAgo, "to", latestDateInData);
-            filteredData = rawData.filter(d => d.time >= weekAgo && d.time <= latestDateInData);
+            const weekAgo = new Date();
+            weekAgo.setDate(now.getDate() - 7);
+            filteredData = rawData.filter(d => d.time >= weekAgo);
             break;
 
         case 'monthly':
-            const monthAgo = new Date(latestDateInData);
-            monthAgo.setMonth(latestDateInData.getMonth() - 1);
-            console.log("Monthly filter: from", monthAgo, "to", latestDateInData);
-            filteredData = rawData.filter(d => d.time >= monthAgo && d.time <= latestDateInData);
+            const monthAgo = new Date();
+            monthAgo.setMonth(now.getMonth() - 1);
+            filteredData = rawData.filter(d => d.time >= monthAgo);
             break;
 
         case 'yearly':
-            const yearAgo = new Date(latestDateInData);
-            yearAgo.setFullYear(latestDateInData.getFullYear() - 1);
-            console.log("Yearly filter: from", yearAgo, "to", latestDateInData);
-            filteredData = rawData.filter(d => d.time >= yearAgo && d.time <= latestDateInData);
+            const yearAgo = new Date();
+            yearAgo.setFullYear(now.getFullYear() - 1);
+            filteredData = rawData.filter(d => d.time >= yearAgo);
             break;
 
         case 'custom':
             if (!isNaN(startDate) && !isNaN(endDate)) {
-                console.log("Custom filter: from", startDate, "to", endDate);
                 filteredData = rawData.filter(d => d.time >= startDate && d.time <= endDate);
             } else {
                 filteredData = rawData;
@@ -164,23 +145,23 @@ function filterData() {
             break;
 
         default: // 'all'
-            console.log("All data filter.");
             filteredData = [...rawData];
     }
 
-    console.log("Number of data points after filtering:", filteredData.length);
+    // Sort by date
     return filteredData.sort((a, b) => a.time - b.time);
 }
 
 // Function to create a single chart
 function createChart(metric, labels, metricData, container) {
+    console.log("Métrica actual:", metric);
     const chartWrapper = document.createElement('div');
     chartWrapper.className = 'chart-wrapper';
     chartWrapper.id = `chart-wrapper-${metric}`;
 
     const chartTitle = document.createElement('div');
     chartTitle.className = 'chart-title';
-    chartTitle.textContent = metric; // Use the metric name from the header
+    chartTitle.textContent = metricInfo[metric].title;
 
     const canvas = document.createElement('canvas');
     canvas.id = metric + 'Chart';
@@ -213,17 +194,15 @@ function createChart(metric, labels, metricData, container) {
             chartInstance.destroy();
         }
 
-        const metricColor = chartColors[metric.toLowerCase()] || { color: '#777', background: 'rgba(119, 119, 119, 0.1)' };
-
         chartInstance = new Chart(ctx, {
             type: type,
             data: {
                 labels: labels,
                 datasets: [{
-                    label: metric,
+                    label: metricInfo[metric].title + (metricInfo[metric].unit ? ` ${metricInfo[metric].unit}` : ''),
                     data: metricData,
-                    borderColor: metricColor.color,
-                    backgroundColor: type === 'bar' ? metricColor.color : metricColor.background,
+                    borderColor: chartColors[metric].color,
+                    backgroundColor: type === 'bar' ? chartColors[metric].color : chartColors[metric].background,
                     borderWidth: 3,
                     pointRadius: 4,
                     pointHoverRadius: 6,
@@ -238,7 +217,7 @@ function createChart(metric, labels, metricData, container) {
                 scales: {
                     x: { grid: { display: false } },
                     y: {
-                        beginAtZero: metric.toLowerCase().includes('fat') || metric.toLowerCase().includes('visceral') ? true : false,
+                        beginAtZero: metric === 'visceralFat' ? true : false,
                         suggestedMin: getMinValue(metricData, 0.9),
                         suggestedMax: getMaxValue(metricData, 1.1)
                     }
@@ -256,18 +235,13 @@ function createChart(metric, labels, metricData, container) {
 }
 
 // Create or update charts
-function updateCharts(header) {
-    if (!latestDateInData) {
-        alert("Por favor, carga un archivo CSV primero.");
-        return;
-    }
-
+function updateCharts() {
     const data = filterData();
     if (data.length === 0) {
         alert("No hay datos disponibles para el período seleccionado");
         dateRangeInfo.textContent = "No hay datos para el período seleccionado";
-        chartsContainer.innerHTML = '';
-        latestDataContainer.innerHTML = '';
+        chartsContainer.innerHTML = ''; // Clear previous charts
+        latestDataContainer.innerHTML = ''; // Clear latest data
         return;
     }
 
@@ -277,38 +251,28 @@ function updateCharts(header) {
     });
 
     const selectedMetrics = Array.from(document.querySelectorAll('input[type=checkbox]:checked'))
-        .map(cb => cb.value);
+        .map(cb => cb.value)
+        .sort((a, b) => metricInfo[a].order - metricInfo[b].order);
 
-    chartsContainer.innerHTML = '';
-    latestDataContainer.innerHTML = '<h4>Último Dato Insertado</h4>';
+    chartsContainer.innerHTML = ''; // Clear previous charts
+    latestDataContainer.innerHTML = ''; // Clear previous latest data
 
-    // Display the absolute latest measurement from the raw data in the specified order
-    if (rawData.length > 0) {
-        const absoluteLatestDataPoint = rawData.reduce((latest, current) => {
-            return current.time > latest.time ? current : latest;
-        });
-
-        orderedMetrics.forEach(metricName => {
-            if (absoluteLatestDataPoint.hasOwnProperty(metricName)) {
-                const value = absoluteLatestDataPoint[metricName];
-                const unit = metricInfo[metricName.toLowerCase()]?.unit || '';
-                const title = metricInfo[metricName.toLowerCase()]?.title || metricName;
-                const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
-                if (formattedValue !== undefined && formattedValue !== null) {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'latest-data-item';
-                    itemDiv.innerHTML = `<p><strong>${title}:</strong> ${formattedValue}${unit ? ` ${unit}` : ''}</p>`;
-                    latestDataContainer.appendChild(itemDiv);
-                }
-            }
+    // Display latest measurement
+    if (data.length > 0) {
+        const latestDataPoint = data[data.length - 1];
+        selectedMetrics.forEach(metric => {
+            const value = latestDataPoint[metric];
+            const unitText = metricInfo[metric].unit ? ` ${metricInfo[metric].unit}` : '';
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'latest-data-item';
+            itemDiv.innerHTML = `<h4>${metricInfo[metric].title}</h4><p>${value.toFixed(1)}${unitText}</p>`;
+            latestDataContainer.appendChild(itemDiv);
         });
     }
 
     selectedMetrics.forEach(metric => {
-        if (header.includes(metric)) {
-            const metricData = data.map(d => d[metric]);
-            createChart(metric, labels, metricData, chartsContainer);
-        }
+        const metricData = data.map(d => d[metric]);
+        createChart(metric, labels, metricData, chartsContainer);
     });
 
     // Add percentage progress chart
@@ -325,16 +289,14 @@ function updateCharts(header) {
         chartsContainer.appendChild(progressChartWrapper);
 
         const progressCtx = progressCanvas.getContext('2d');
-        const progressLabels = selectedMetrics.filter(metric => header.includes(metric));
-        const progressData = progressLabels.map(metric => {
+        const progressLabels = selectedMetrics.map(metric => metricInfo[metric].title);
+        const progressData = selectedMetrics.map(metric => {
             const firstValue = data[0][metric];
             const lastValue = data[data.length - 1][metric];
-            if (typeof firstValue === 'number' && typeof lastValue === 'number' && firstValue !== 0) {
-                return ((lastValue - firstValue) / firstValue) * 100;
-            }
-            return NaN;
+            if (firstValue === 0) return 0; // Avoid division by zero
+            return ((lastValue - firstValue) / firstValue) * 100;
         });
-        const backgroundColors = progressData.map(progress => !isNaN(progress) && progress >= 0 ? chartColors.success.color : chartColors.danger.color);
+        const backgroundColors = progressData.map(progress => progress >= 0 ? chartColors.success.color : chartColors.danger.color);
 
         new Chart(progressCtx, {
             type: 'bar',
@@ -363,17 +325,13 @@ function updateCharts(header) {
 
 // Calculate min/max values
 function getMinValue(data, factor) {
-    const validData = data.filter(value => typeof value === 'number');
-    if (validData.length === 0) return 0;
-    const min = Math.min(...validData);
-    return isFinite(min) ? min * factor : 0;
+    const min = Math.min(...data);
+    return min * factor;
 }
 
 function getMaxValue(data, factor) {
-    const validData = data.filter(value => typeof value === 'number');
-    if (validData.length === 0) return 1;
-    const max = Math.max(...validData);
-    return isFinite(max) ? max * factor : 1;
+    const max = Math.max(...data);
+    return max * factor;
 }
 
 // Display date range summary
@@ -399,6 +357,7 @@ function initializeDateInputs() {
     endDateInput.valueAsDate = today;
     startDateInput.valueAsDate = lastYear;
 
+    // Initially hide date inputs unless custom filter is selected
     handleFilterChange();
 }
 
@@ -406,6 +365,7 @@ function initializeDateInputs() {
 window.onload = function() {
     initializeDateInputs();
 
+    // Check if user has previously uploaded data (for demo purposes)
     if (localStorage.getItem('hasData') === 'true') {
         dateRangeInfo.textContent = "Selecciona un archivo CSV para comenzar";
     }
