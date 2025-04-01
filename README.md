@@ -2,7 +2,6 @@
 
 Estoy trabajando arduamente para mejorar esta funcionalidad. Por el momento, algunas características podrían no estar completamente operativas o presentar problemas.
 
-Agradecemos tu paciencia mientras continuo desarrollando este proyecto.
 
 📊 Estadísticas de la Báscula - WebApp para Visualizar Datos Corporales de la mi scale2 (xiaomi)
 
