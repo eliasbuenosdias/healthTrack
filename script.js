@@ -38,6 +38,7 @@ const updateButton = document.getElementById('updateButton');
 const chartsContainer = document.getElementById('chartsContainer');
 const dateRangeInfo = document.getElementById('dateRangeInfo');
 const latestDataContainer = document.getElementById('latestDataContainer');
+const recentMeasurementsContainer = document.getElementById('recentMeasurementsContainer') || createRecentMeasurementsContainer();
 
 // Ordered list of metrics to display in the "Último Dato Insertado" section
 const orderedMetrics = ['weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism', 'muscleRate', 'visceralFat'];
@@ -78,6 +79,7 @@ function handleFileUpload(event) {
                 }, new Date(0)); // Initialize with a very early date
 
                 updateCharts(csvHeader);
+                displayRecentMeasurements(); // Display recent measurements after loading data
             } else {
                 alert("No se pudieron procesar datos válidos del archivo CSV.");
                 dateRangeInfo.textContent = "No hay datos válidos en el archivo";
@@ -362,6 +364,9 @@ function updateCharts(header) {
 
     updateDateRangeSummary(data);
     chartsContainer.scrollTop = 0;
+    
+    // Call to display recent measurements
+    displayRecentMeasurements();
 }
 
 // Calculate min/max values
@@ -393,6 +398,199 @@ function updateDateRangeSummary(data) {
     dateRangeInfo.textContent = `Mostrando datos desde ${firstDateStr} hasta ${lastDateStr} (${data.length} mediciones)`;
 }
 
+// Function to display recent measurements
+function displayRecentMeasurements() {
+    // Verify data is loaded
+    if (!rawData || rawData.length === 0) {
+        console.log("No hay datos para mostrar mediciones recientes");
+        return;
+    }
+
+    // Get the metrics to display
+    const metricsToDisplay = [
+        'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate',
+        'boneMass', 'metabolism', 'muscleRate', 'visceralFat'
+    ];
+    
+    // Sort data by date (newest first)
+    const sortedData = [...rawData].sort((a, b) => b.time - a.time);
+    
+    // Take the 8 most recent entries (or all if less than 8)
+    const recentEntries = sortedData.slice(0, 8);
+    
+    // Get or create container for recent measurements
+    const recentMeasurementsContainer = document.getElementById('recentMeasurementsContainer') || 
+        createRecentMeasurementsContainer();
+    
+    // Clear existing content
+    recentMeasurementsContainer.innerHTML = '<h4>Últimas 8 Mediciones</h4>';
+    
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'recent-measurements-table';
+    
+    // Create header row
+    const headerRow = document.createElement('tr');
+    const dateHeader = document.createElement('th');
+    dateHeader.textContent = 'Fecha';
+    headerRow.appendChild(dateHeader);
+    
+    // Add headers for each metric
+    metricsToDisplay.forEach(metric => {
+        // Find the exact column name in the header that matches our metric
+        const exactMatch = csvHeader.find(header => 
+            header.toLowerCase() === metric.toLowerCase()
+        );
+        
+        if (exactMatch) {
+            const metricHeader = document.createElement('th');
+            const info = metricInfo[metric.toLowerCase()] || { title: metric };
+            metricHeader.textContent = info.title;
+            headerRow.appendChild(metricHeader);
+        }
+    });
+    
+    table.appendChild(headerRow);
+    
+    // Add data rows
+    recentEntries.forEach(entry => {
+        const row = document.createElement('tr');
+        
+        // Add date cell
+        const dateCell = document.createElement('td');
+        dateCell.textContent = new Date(entry.time).toLocaleDateString('es-ES', { 
+            day: '2-digit', month: '2-digit', year: '2-digit' 
+        });
+        row.appendChild(dateCell);
+        
+        // Add cells for each metric
+        metricsToDisplay.forEach(metric => {
+            // Find the exact column name that matches our metric
+            const exactMatch = csvHeader.find(header => 
+                header.toLowerCase() === metric.toLowerCase()
+            );
+            
+            if (exactMatch) {
+                const cell = document.createElement('td');
+                const value = entry[exactMatch];
+                const info = metricInfo[metric.toLowerCase()] || { unit: '' };
+                
+                if (value !== undefined && value !== null && !isNaN(value)) {
+                    // Format the value according to the metric type
+                    const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
+                    cell.textContent = `${formattedValue}${info.unit ? ` ${info.unit}` : ''}`;
+                    
+                    // Add styling based on the metric type
+                    const metricColor = chartColors[metric.toLowerCase()];
+                    if (metricColor) {
+                        cell.style.borderLeft = `3px solid ${metricColor.color}`;
+                    }
+                } else {
+                    cell.textContent = '-';
+                }
+                
+                row.appendChild(cell);
+            }
+        });
+        
+        table.appendChild(row);
+    });
+    
+    recentMeasurementsContainer.appendChild(table);
+}
+
+// Helper function to create the container if it doesn't exist
+function createRecentMeasurementsContainer() {
+    const container = document.createElement('div');
+    container.id = 'recentMeasurementsContainer';
+    container.className = 'recent-measurements-container';
+    
+    // Add it after the latest data container
+    const latestDataContainer = document.getElementById('latestDataContainer');
+    if (latestDataContainer && latestDataContainer.parentNode) {
+        latestDataContainer.parentNode.insertBefore(container, latestDataContainer.nextSibling);
+    } else {
+        // Fallback - add before the charts container
+        const chartsContainer = document.getElementById('chartsContainer');
+        if (chartsContainer && chartsContainer.parentNode) {
+            chartsContainer.parentNode.insertBefore(container, chartsContainer);
+        } else {
+            // Last resort - add to body
+            document.body.appendChild(container);
+        }
+    }
+    
+    return container;
+}
+
+// Add styles for the recent measurements table
+function addRecentMeasurementsStyles() {
+    // Check if styles already exist
+    if (document.getElementById('recentMeasurementsStyles')) {
+        return;
+    }
+    
+    const style = document.createElement('style');
+    style.id = 'recentMeasurementsStyles';
+    style.textContent = `
+        .recent-measurements-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .recent-measurements-container h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .recent-measurements-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        .recent-measurements-table th {
+            background-color: #f8f9fa;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            white-space: nowrap;
+        }
+        
+        .recent-measurements-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap;
+        }
+        
+        .recent-measurements-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .recent-measurements-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .recent-measurements-table {
+                font-size: 12px;
+            }
+            
+            .recent-measurements-table th,
+            .recent-measurements-table td {
+                padding: 6px 8px;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // Initialize date inputs
 function initializeDateInputs() {
     const today = new Date();
@@ -408,6 +606,7 @@ function initializeDateInputs() {
 // Initialize on page load
 window.onload = function() {
     initializeDateInputs();
+    addRecentMeasurementsStyles();
 
     if (localStorage.getItem('hasData') === 'true') {
         dateRangeInfo.textContent = "Selecciona un archivo CSV para comenzar";
