@@ -126,30 +126,37 @@ function filterData() {
     let filteredData;
 
     if (!latestDateInData) {
+        console.log("latestDateInData is not set.");
         return []; // No data loaded yet
     }
+
+    console.log("Latest date in data:", latestDateInData);
 
     switch (filterType) {
         case 'weekly':
             const weekAgo = new Date(latestDateInData);
             weekAgo.setDate(latestDateInData.getDate() - 7);
+            console.log("Weekly filter: from", weekAgo, "to", latestDateInData);
             filteredData = rawData.filter(d => d.time >= weekAgo && d.time <= latestDateInData);
             break;
 
         case 'monthly':
             const monthAgo = new Date(latestDateInData);
             monthAgo.setMonth(latestDateInData.getMonth() - 1);
+            console.log("Monthly filter: from", monthAgo, "to", latestDateInData);
             filteredData = rawData.filter(d => d.time >= monthAgo && d.time <= latestDateInData);
             break;
 
         case 'yearly':
             const yearAgo = new Date(latestDateInData);
             yearAgo.setFullYear(latestDateInData.getFullYear() - 1);
+            console.log("Yearly filter: from", yearAgo, "to", latestDateInData);
             filteredData = rawData.filter(d => d.time >= yearAgo && d.time <= latestDateInData);
             break;
 
         case 'custom':
             if (!isNaN(startDate) && !isNaN(endDate)) {
+                console.log("Custom filter: from", startDate, "to", endDate);
                 filteredData = rawData.filter(d => d.time >= startDate && d.time <= endDate);
             } else {
                 filteredData = rawData;
@@ -157,9 +164,11 @@ function filterData() {
             break;
 
         default: // 'all'
+            console.log("All data filter.");
             filteredData = [...rawData];
     }
 
+    console.log("Number of data points after filtering:", filteredData.length);
     return filteredData.sort((a, b) => a.time - b.time);
 }
 
